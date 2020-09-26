@@ -6,6 +6,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Events as Events
 import Element.Font as Font
+import Html.Attributes as HtmlAttributes
 import Task
 import Time
 
@@ -516,6 +517,7 @@ switchHomeScreen model theme =
         [ height fill
         , width fill
         , padding 15
+        , htmlAttribute (HtmlAttributes.style "user-select" "none")
         ]
         [ switchTopRow model theme
         , switchGameRow model theme
