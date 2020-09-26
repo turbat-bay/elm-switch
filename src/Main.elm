@@ -59,11 +59,27 @@ displayMode =
 type alias DisplayTheme msg =
     { mainColors : List (Attribute msg)
     , buttonColors : List (Attribute msg)
+    , playerItemStyle : List (Attribute msg)
+    , gameStyle : List (Attribute msg)
     }
 
 
 displayTheme : Model -> DisplayTheme msg
 displayTheme model =
+    let
+        actualMillis =
+            getMillis model.timeZone model.currentTime
+
+        hoverBorderAlpha =
+            if actualMillis <= 300 then
+                1.0 - (toFloat actualMillis / 1000)
+
+            else if actualMillis >= 800 then
+                1.0
+
+            else
+                toFloat actualMillis / 1000
+    in
     case model.displayMode of
         Day ->
             { mainColors =
@@ -73,17 +89,50 @@ displayTheme model =
             , buttonColors =
                 [ Background.color <| rgb255 255 255 255
                 , Border.shadow
-                    { blur = 3
-                    , color = rgb255 218 218 218
+                    { blur = 0
+                    , color = rgba255 218 218 218 1.0
                     , offset = ( 0, 0 )
                     , size = 0.8
                     }
                 , mouseOver
                     [ Border.shadow
                         { blur = 0
-                        , color = rgb255 46 215 200
+                        , color = rgba255 46 215 200 hoverBorderAlpha
                         , offset = ( 0, 0 )
-                        , size = 3
+                        , size = 5
+                        }
+                    ]
+                ]
+            , playerItemStyle =
+                [ width <| fill
+                , height <| fill
+                , Border.color <| rgb255 255 255 255
+                , Border.width 4
+                , Border.rounded 90
+                , clip
+                , Background.color <| rgb255 255 255 255
+                , Border.shadow
+                    { blur = 0
+                    , color = rgba255 218 218 218 1.0
+                    , offset = ( 0, 0 )
+                    , size = 0.8
+                    }
+                , mouseOver
+                    [ Border.shadow
+                        { blur = 0
+                        , color = rgba255 46 215 200 hoverBorderAlpha
+                        , offset = ( 0, 0 )
+                        , size = 5
+                        }
+                    ]
+                ]
+            , gameStyle =
+                [ mouseOver
+                    [ Border.shadow
+                        { blur = 0
+                        , color = rgba255 46 215 200 hoverBorderAlpha
+                        , offset = ( 0, 0 )
+                        , size = 4
                         }
                     ]
                 ]
@@ -105,11 +154,43 @@ displayTheme model =
                 , mouseOver
                     [ Border.shadow
                         { blur = 0
-                        , color = rgb255 255 255 255
+                        , color = rgba255 255 255 255 hoverBorderAlpha
                         , offset = ( 0, 0 )
-                        , size = 3
+                        , size = 5
                         }
-                    , Border.innerGlow (rgb255 255 0 0) 40
+                    ]
+                ]
+            , playerItemStyle =
+                [ width <| fill
+                , height <| fill
+                , Border.color <| rgb255 88 77 75
+                , Border.width 3
+                , Border.rounded 45
+                , clip
+                , Background.color <| rgb255 255 255 255
+                , Border.shadow
+                    { blur = 0
+                    , color = rgba255 218 218 218 1.0
+                    , offset = ( 0, 0 )
+                    , size = 0.8
+                    }
+                , mouseOver
+                    [ Border.shadow
+                        { blur = 0
+                        , color = rgba255 46 215 200 hoverBorderAlpha
+                        , offset = ( 0, 0 )
+                        , size = 5
+                        }
+                    ]
+                ]
+            , gameStyle =
+                [ mouseOver
+                    [ Border.shadow
+                        { blur = 0
+                        , color = rgba255 255 255 255 hoverBorderAlpha
+                        , offset = ( 0, 0 )
+                        , size = 5
+                        }
                     ]
                 ]
             }
@@ -193,7 +274,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Time.every 1000 Tick
+    Time.every 60 Tick
 
 
 playerList : List Player
@@ -227,54 +308,33 @@ quickActionsList =
     ]
 
 
-playerItem : Player -> Element Msg
-playerItem player =
+playerItem : DisplayTheme Msg -> Player -> Element Msg
+playerItem theme player =
     Element.column
         [ spacingXY 0 10
-        , width <| px 48
+        , width <| px 64
         , Font.color <| rgba255 255 255 255 0
         , mouseOver [ Font.color <| rgb255 120 140 200 ]
         , Events.onClick <| SelectPlayer player
         ]
         [ row [ centerX, centerY ]
             [ image
-                [ width <| fill
-                , height <| fill
-                , Border.color <| rgb255 88 77 75
-                , Border.width 3
-                , Border.rounded 45
-                , Border.shadow
-                    { blur = 3
-                    , color = rgb255 40 40 40
-                    , offset = ( 0, 0 )
-                    , size = 0.8
-                    }
-                , clip
-                , mouseOver
-                    [ Border.shadow
-                        { blur = 0
-                        , color = rgb255 255 255 255
-                        , offset = ( 0, 0 )
-                        , size = 3
-                        }
-                    , Border.innerGlow (rgb255 255 0 0) 40
-                    ]
-                ]
+                theme.playerItemStyle
                 { src = player.icon, description = "" }
             ]
         , el [ centerX ] <| text player.name
         ]
 
 
-switchTopRow : Model -> Element Msg
-switchTopRow model =
+switchTopRow : Model -> DisplayTheme Msg -> Element Msg
+switchTopRow model theme =
     Element.row
         [ width fill
         , height <| fillPortion 1
         ]
         [ Element.column [ Font.center ]
             [ Element.row [ spacingXY 10 0 ]
-                (List.map playerItem playerList)
+                (List.map (playerItem theme) playerList)
             ]
         , Element.column
             [ height <| fill
@@ -290,8 +350,8 @@ switchTopRow model =
         ]
 
 
-gameItem : Model -> Game -> Element Msg
-gameItem model game =
+gameItem : Model -> DisplayTheme Msg -> Game -> Element Msg
+gameItem model theme game =
     let
         gameIsSelected =
             case model.selectedGame of
@@ -357,7 +417,7 @@ gameItem model game =
                 inFront none
     in
     column
-        [ spacingXY 0 10
+        [ spacing 10
         , Font.color <| rgba255 255 255 255 0
         , mouseOver [ Font.color <| rgb255 120 140 200 ]
         , Events.onClick <| SelectGame game
@@ -373,39 +433,27 @@ gameItem model game =
             ]
           <|
             image
-                [ width fill
-                , height fill
-                , Border.shadow
-                    { blur = 5
-                    , color = rgb255 40 40 40
-                    , offset = ( 0, 0 )
-                    , size = 0.8
-                    }
-                , mouseOver
-                    [ Border.shadow
-                        { blur = 0
-                        , color = rgb255 255 255 255
-                        , offset = ( 0, 0 )
-                        , size = 3
-                        }
-                    , Border.innerGlow (rgb255 255 0 0) 40
-                    ]
-                , selectionIcon
-                ]
+                ([ width fill
+                 , height fill
+                 , selectionIcon
+                 ]
+                    ++ theme.gameStyle
+                )
                 { src = game.icon, description = game.title }
         ]
 
 
-switchGameRow : Model -> Element Msg
-switchGameRow model =
+switchGameRow : Model -> DisplayTheme Msg -> Element Msg
+switchGameRow model theme =
     Element.row
         [ width fill
-        , height <| fillPortion 7
-        , spacingXY 15 0
+        , height <| fillPortion 4
+        , spacing 15
+        , padding 5
         , scrollbarY
         ]
     <|
-        List.map (gameItem model) gamesList
+        List.map (gameItem model theme) gamesList
 
 
 quickActionItem : DisplayTheme Msg -> QuickAction -> Element Msg
@@ -469,8 +517,8 @@ switchHomeScreen model theme =
         , width fill
         , padding 15
         ]
-        [ switchTopRow model
-        , switchGameRow model
+        [ switchTopRow model theme
+        , switchGameRow model theme
         , switchQuickActionsRow theme
         , switchBottomRow
         ]
@@ -504,8 +552,10 @@ renderTime zone time =
 
         minutes =
             Time.toMinute zone time |> String.fromInt |> padZero
-
-        seconds =
-            Time.toSecond zone time |> String.fromInt |> padZero
     in
     hours ++ ":" ++ minutes
+
+
+getMillis : Time.Zone -> Time.Posix -> Int
+getMillis zone time =
+    Time.toMillis zone time
