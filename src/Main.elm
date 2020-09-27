@@ -280,21 +280,21 @@ subscriptions model =
 
 playerList : List Player
 playerList =
-    [ Player 0 "mats" "/public/assets/icons/players/player_0.png"
-    , Player 1 "Guest" "/public/assets/icons/players/player_1.png"
-    , Player 2 "フクロウ" "/public/assets/icons/players/player_2.png"
-    , Player 3 "姉さん" "/public/assets/icons/players/player_3.png"
+    [ Player 0 "mats" "public/assets/icons/players/player_0.png"
+    , Player 1 "Guest" "public/assets/icons/players/player_1.png"
+    , Player 2 "フクロウ" "public/assets/icons/players/player_2.png"
+    , Player 3 "姉さん" "public/assets/icons/players/player_3.png"
     ]
 
 
 gamesList : List Game
 gamesList =
-    [ Game 2 "三ノ国・赤き聖灰の王" "/public/assets/icons/games/n_n_kn.png"
-    , Game 387 "本末転倒ラボ・Soy-Con 01" "/public/assets/icons/games/t_con.png"
-    , Game 44 "パレオブレイド伝説" "/public/assets/icons/games/xb_chr.png"
-    , Game 1021 "Untitled Moose Game" "/public/assets/icons/games/unt_gse.png"
-    , Game 33 "Moria Odyssey" "/public/assets/icons/games/t_con.png"
-    , Game 77 "ばらまけ! ごはんの大盛" "/public/assets/icons/games/t_con.png"
+    [ Game 2 "三ノ国・赤き聖灰の王" "public/assets/icons/games/n_n_kn.png"
+    , Game 387 "本末転倒ラボ・Soy-Con 01" "public/assets/icons/games/t_con.png"
+    , Game 44 "パレオブレイド伝説" "public/assets/icons/games/xb_chr.png"
+    , Game 1021 "Untitled Moose Game" "public/assets/icons/games/unt_gse.png"
+    , Game 33 "Moria Odyssey" "public/assets/icons/games/t_con.png"
+    , Game 77 "ばらまけ! ごはんの大盛" "public/assets/icons/games/t_con.png"
     ]
 
 
