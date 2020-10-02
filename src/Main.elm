@@ -6,7 +6,10 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Events as Events
 import Element.Font as Font
+import Html exposing (Html)
 import Html.Attributes as HtmlAttributes
+import Ionicon
+import Ionicon.Ios as IconIos
 import Task
 import Time
 
@@ -52,9 +55,22 @@ type DisplayMode
     | Day
 
 
-displayMode : DisplayMode
-displayMode =
-    Night
+type alias ThemeColors =
+    { mainColors :
+        { backgroundColor : Color
+        , fontColor : Color
+        }
+    , buttonColors :
+        { backgroundColor : Color
+        , borderColor : Color
+        , mouseOverColor : Color
+        }
+    , playerItemColors :
+        { backgroundColor : Color
+        , borderColor : Color
+        , mouseOverColor : Color
+        }
+    }
 
 
 type alias DisplayTheme msg =
@@ -65,9 +81,10 @@ type alias DisplayTheme msg =
     }
 
 
-displayTheme : Model -> DisplayTheme msg
-displayTheme model =
+setThemeColors : Model -> ThemeColors
+setThemeColors model =
     let
+        {- Use current time to dynamically modify border alpha value. -}
         actualMillis =
             getMillis model.timeZone model.currentTime
 
@@ -80,121 +97,111 @@ displayTheme model =
 
             else
                 toFloat actualMillis / 1000
-    in
-    case model.displayMode of
-        Day ->
-            { mainColors =
-                [ Background.color <| rgb255 235 235 235
-                , Font.color <| rgb255 41 41 41
-                ]
-            , buttonColors =
-                [ Background.color <| rgb255 255 255 255
-                , Border.shadow
-                    { blur = 0
-                    , color = rgba255 218 218 218 1.0
-                    , offset = ( 0, 0 )
-                    , size = 0.8
-                    }
-                , mouseOver
-                    [ Border.shadow
-                        { blur = 0
-                        , color = rgba255 46 215 200 hoverBorderAlpha
-                        , offset = ( 0, 0 )
-                        , size = 5
-                        }
-                    ]
-                ]
-            , playerItemStyle =
-                [ width <| fill
-                , height <| fill
-                , Border.color <| rgb255 255 255 255
-                , Border.width 4
-                , Border.rounded 90
-                , clip
-                , Background.color <| rgb255 255 255 255
-                , Border.shadow
-                    { blur = 0
-                    , color = rgba255 218 218 218 1.0
-                    , offset = ( 0, 0 )
-                    , size = 0.8
-                    }
-                , mouseOver
-                    [ Border.shadow
-                        { blur = 0
-                        , color = rgba255 46 215 200 hoverBorderAlpha
-                        , offset = ( 0, 0 )
-                        , size = 5
-                        }
-                    ]
-                ]
-            , gameStyle =
-                [ mouseOver
-                    [ Border.shadow
-                        { blur = 0
-                        , color = rgba255 46 215 200 hoverBorderAlpha
-                        , offset = ( 0, 0 )
-                        , size = 4
-                        }
-                    ]
-                ]
-            }
 
-        Night ->
-            { mainColors =
-                [ Font.color <| rgb255 255 255 255
-                , Background.color <| rgb255 44 44 44
-                ]
-            , buttonColors =
-                [ Background.color <| rgb255 80 80 80
-                , Border.shadow
-                    { blur = 3
-                    , color = rgb255 40 40 40
-                    , offset = ( 0, 0 )
-                    , size = 0.8
+        mainColors =
+            case model.displayMode of
+                Day ->
+                    { backgroundColor = rgb255 235 235 235
+                    , fontColor = rgb255 41 41 41
                     }
-                , mouseOver
-                    [ Border.shadow
-                        { blur = 0
-                        , color = rgba255 255 255 255 hoverBorderAlpha
-                        , offset = ( 0, 0 )
-                        , size = 5
-                        }
-                    ]
-                ]
-            , playerItemStyle =
-                [ width <| fill
-                , height <| fill
-                , Border.color <| rgb255 88 77 75
-                , Border.width 3
-                , Border.rounded 45
-                , clip
-                , Background.color <| rgb255 255 255 255
-                , Border.shadow
-                    { blur = 0
-                    , color = rgba255 218 218 218 1.0
-                    , offset = ( 0, 0 )
-                    , size = 0.8
+
+                Night ->
+                    { backgroundColor = rgb255 44 44 44
+                    , fontColor = rgb255 255 255 255
                     }
-                , mouseOver
-                    [ Border.shadow
-                        { blur = 0
-                        , color = rgba255 46 215 200 hoverBorderAlpha
-                        , offset = ( 0, 0 )
-                        , size = 5
-                        }
-                    ]
-                ]
-            , gameStyle =
-                [ mouseOver
-                    [ Border.shadow
-                        { blur = 0
-                        , color = rgba255 255 255 255 hoverBorderAlpha
-                        , offset = ( 0, 0 )
-                        , size = 5
-                        }
-                    ]
-                ]
+
+        buttonColors =
+            case model.displayMode of
+                Day ->
+                    { backgroundColor = rgb255 255 255 255
+                    , borderColor = rgb255 218 218 218
+                    , mouseOverColor = rgba255 46 215 200 hoverBorderAlpha
+                    }
+
+                Night ->
+                    { backgroundColor = rgb255 80 80 80
+                    , borderColor = rgb255 40 40 40
+                    , mouseOverColor = rgba255 255 255 255 hoverBorderAlpha
+                    }
+
+        playerItemColors =
+            case model.displayMode of
+                Day ->
+                    { borderColor = rgb255 255 255 255
+                    , backgroundColor = rgb255 255 255 255
+                    , mouseOverColor = rgba255 46 215 200 hoverBorderAlpha
+                    }
+
+                Night ->
+                    { borderColor = rgb255 88 77 75
+                    , backgroundColor = rgb255 255 255 255
+                    , mouseOverColor = rgba255 46 215 200 hoverBorderAlpha
+                    }
+    in
+    ThemeColors mainColors buttonColors playerItemColors
+
+
+displayTheme : ThemeColors -> DisplayTheme msg
+displayTheme themeColors =
+    let
+        mainColors =
+            themeColors.mainColors
+
+        buttonColors =
+            themeColors.buttonColors
+
+        playerItemColors =
+            themeColors.playerItemColors
+    in
+    { mainColors =
+        [ Background.color <| mainColors.backgroundColor
+        , Font.color <| mainColors.fontColor
+        ]
+    , playerItemStyle =
+        [ width <| fill
+        , height <| fill
+        , Border.color <| playerItemColors.borderColor
+        , Border.width 4
+        , Border.rounded 90
+        , clip
+        , Background.color <| playerItemColors.backgroundColor
+        , mouseOver
+            [ Border.shadow
+                { blur = 0
+                , color = playerItemColors.mouseOverColor
+                , offset = ( 0, 0 )
+                , size = 5
+                }
+            ]
+        ]
+    , gameStyle =
+        [ mouseOver
+            [ Border.shadow
+                { blur = 0
+                , color = buttonColors.mouseOverColor
+                , offset = ( 0, 0 )
+                , size = 4
+                }
+            ]
+        ]
+    , buttonColors =
+        [ Background.color <| buttonColors.backgroundColor
+        , Border.shadow
+            { blur = 0
+            , color = buttonColors.borderColor
+            , offset = ( 0, 0 )
+            , size = 0.8
             }
+        , mouseOver
+            [ Border.shadow
+                { blur = 0
+                , color = buttonColors.mouseOverColor
+                , offset = ( 0, 0 )
+                , size = 5
+                }
+            ]
+        ]
+    }
 
 
 type alias Player =
@@ -211,9 +218,10 @@ type alias Game =
     }
 
 
-type alias QuickAction =
+type alias QuickAction msg =
     { title : String
-    , icon : String
+    , icon : Icon msg
+    , color : Color
     , action : Msg
     }
 
@@ -298,14 +306,14 @@ gamesList =
     ]
 
 
-quickActionsList : List QuickAction
+quickActionsList : List (QuickAction msg)
 quickActionsList =
-    [ QuickAction "News" "" NoOp
-    , QuickAction "eShop" "" NoOp
-    , QuickAction "Album" "" NoOp
-    , QuickAction "Controllers" "" NoOp
-    , QuickAction "System Settings" "" ClickedThemeButton
-    , QuickAction "Sleep Mode" "" NoOp
+    [ QuickAction "News" IconIos.chatboxesOutline (rgba255 204 51 0 1.0) NoOp
+    , QuickAction "eShop" Ionicon.bag (rgba255 204 204 0 1.0) NoOp
+    , QuickAction "Album" Ionicon.image (rgb255 102 102 204) NoOp
+    , QuickAction "Controllers" IconIos.gameControllerA (rgb255 175 175 175) NoOp
+    , QuickAction "System Settings" IconIos.lightbulb (rgb255 175 175 175) ClickedThemeButton
+    , QuickAction "Sleep Mode" Ionicon.power (rgb255 175 175 175) NoOp
     ]
 
 
@@ -327,8 +335,8 @@ playerItem theme player =
         ]
 
 
-switchTopRow : Model -> DisplayTheme Msg -> Element Msg
-switchTopRow model theme =
+switchTopRow : Model -> ThemeColors -> DisplayTheme Msg -> Element Msg
+switchTopRow model colors theme =
     Element.row
         [ width fill
         , height <| fillPortion 1
@@ -344,7 +352,11 @@ switchTopRow model theme =
             ]
             [ row [ spacing 10 ]
                 [ text <| renderTime model.timeZone model.currentTime
-                , text "Wifi"
+                , let
+                    mainColors =
+                        colors.mainColors
+                  in
+                  viewWifiIcon mainColors.fontColor
                 , text "48%"
                 ]
             ]
@@ -457,7 +469,7 @@ switchGameRow model theme =
         List.map (gameItem model theme) gamesList
 
 
-quickActionItem : DisplayTheme Msg -> QuickAction -> Element Msg
+quickActionItem : DisplayTheme Msg -> QuickAction Msg -> Element Msg
 quickActionItem theme quickAction =
     column
         [ centerX
@@ -478,12 +490,7 @@ quickActionItem theme quickAction =
                 ++ theme.buttonColors
             )
           <|
-            el
-                [ centerX
-                , centerY
-                ]
-            <|
-                text "[X]"
+            viewIcon quickAction.icon 48 quickAction.color
         , el [ centerX ] <| text quickAction.title
         ]
 
@@ -511,15 +518,15 @@ switchBottomRow =
         ]
 
 
-switchHomeScreen : Model -> DisplayTheme Msg -> Element Msg
-switchHomeScreen model theme =
+switchHomeScreen : Model -> ThemeColors -> DisplayTheme Msg -> Element Msg
+switchHomeScreen model colors theme =
     Element.column
         [ height fill
         , width fill
         , padding 15
         , htmlAttribute (HtmlAttributes.style "user-select" "none")
         ]
-        [ switchTopRow model theme
+        [ switchTopRow model colors theme
         , switchGameRow model theme
         , switchQuickActionsRow theme
         , switchBottomRow
@@ -528,11 +535,14 @@ switchHomeScreen model theme =
 
 mainView model =
     let
-        displaySettings =
-            model |> displayTheme
+        colors =
+            model |> setThemeColors
+
+        theme =
+            displayTheme colors
     in
-    Element.layout ([ width fill, height fill ] ++ displaySettings.mainColors)
-        (switchHomeScreen model displaySettings)
+    Element.layout ([ width fill, height fill ] ++ theme.mainColors)
+        (switchHomeScreen model colors theme)
 
 
 
@@ -561,3 +571,25 @@ renderTime zone time =
 getMillis : Time.Zone -> Time.Posix -> Int
 getMillis zone time =
     Time.toMillis zone time
+
+
+type alias RGBA =
+    { red : Float
+    , green : Float
+    , blue : Float
+    , alpha : Float
+    }
+
+
+type alias Icon msg =
+    Int -> RGBA -> Html msg
+
+
+viewIcon : Icon Msg -> Int -> Color -> Element Msg
+viewIcon icon size color =
+    el [ centerX, centerY ] <| html <| icon size (toRgb color)
+
+
+viewWifiIcon : Color -> Element Msg
+viewWifiIcon color =
+    viewIcon Ionicon.wifi 28 color
