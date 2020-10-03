@@ -4,8 +4,9 @@ import Browser
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
-import Element.Events as Events
 import Element.Font as Font
+import Element.Input as Input
+import Element.Region as Region
 import Html exposing (Html)
 import Html.Attributes as HtmlAttributes
 import Ionicon
@@ -320,17 +321,27 @@ quickActionsList =
 playerItem : DisplayTheme Msg -> Player -> Element Msg
 playerItem theme player =
     Element.column
-        [ spacingXY 0 10
-        , width <| px 64
+        [ centerX
+        , centerY
+        , spacingXY 0 10
         , Font.color <| rgba255 255 255 255 0
         , mouseOver [ Font.color <| rgb255 120 140 200 ]
-        , Events.onClick <| SelectPlayer player
         ]
-        [ row [ centerX, centerY ]
-            [ image
-                theme.playerItemStyle
-                { src = player.icon, description = "" }
+        [ Input.button
+            [ centerX
+            , centerY
+            , height <| px 64
+            , width <| px 64
+            , Border.rounded 90
+            , inFront <|
+                image
+                    theme.playerItemStyle
+                    { src = player.icon, description = "" }
+            , Region.description player.name
             ]
+            { onPress = Just <| SelectPlayer player
+            , label = text ""
+            }
         , el [ centerX ] <| text player.name
         ]
 
@@ -342,7 +353,10 @@ switchTopRow model colors theme =
         , height <| fillPortion 1
         ]
         [ Element.column [ Font.center ]
-            [ Element.row [ spacingXY 10 0 ]
+            [ Element.row
+                [ spacingXY 10 0
+                , height <| px 100
+                ]
                 (List.map (playerItem theme) playerList)
             ]
         , Element.column
@@ -384,75 +398,76 @@ gameItem model theme game =
 
         selectionIcon =
             if gameIsSelected then
-                inFront
-                    (row
-                        [ alignBottom
-                        , centerX
-                        , spacing 10
-                        , height <| px 56
-                        ]
-                        [ column [ width <| px 42, height <| px 42 ]
-                            [ image
-                                [ width <| fill
-                                , height <| fill
-                                , Border.color <| rgb255 255 255 255
-                                , Border.width 3
-                                , Border.rounded 45
-                                , clip
-                                ]
-                                { src = playerIcon, description = "" }
-                            ]
-                        , column
-                            [ width <| fillPortion 80
-                            , height <| px 42
-                            , paddingXY 20 2
+                row
+                    [ alignBottom
+                    , centerX
+                    , spacing 10
+                    , height <| px 56
+                    ]
+                    [ column [ width <| px 42, height <| px 42 ]
+                        [ image
+                            [ width <| fill
+                            , height <| fill
                             , Border.color <| rgb255 255 255 255
                             , Border.width 3
                             , Border.rounded 45
-                            , Background.color <|
-                                rgba255 0 0 0 0.6
+                            , clip
                             ]
-                            [ el
-                                [ centerY
-                                , paddingXY 20 0
-                                , width <| fill
-                                , Font.color <| rgb255 255 255 255
-                                , Font.size 18
-                                , Font.light
-                                ]
-                              <|
-                                text "Playing"
-                            ]
+                            { src = playerIcon, description = "" }
                         ]
-                    )
+                    , column
+                        [ width <| fillPortion 80
+                        , height <| px 42
+                        , paddingXY 20 2
+                        , Border.color <| rgb255 255 255 255
+                        , Border.width 3
+                        , Border.rounded 45
+                        , Background.color <|
+                            rgba255 0 0 0 0.6
+                        ]
+                        [ el
+                            [ centerY
+                            , paddingXY 20 0
+                            , width <| fill
+                            , Font.color <| rgb255 255 255 255
+                            , Font.size 18
+                            , Font.light
+                            ]
+                          <|
+                            text "Playing"
+                        ]
+                    ]
 
             else
-                inFront none
+                none
     in
     column
         [ spacing 10
         , Font.color <| rgba255 255 255 255 0
         , mouseOver [ Font.color <| rgb255 120 140 200 ]
-        , Events.onClick <| SelectGame game
         ]
         [ el
             [ centerX
             ]
           <|
             text game.title
-        , el
-            [ width <| px 254
+        , Input.button
+            [ Region.description game.title
+            , width <| px 254
             , height <| px 254
+            , inFront <|
+                image
+                    ([ width fill
+                     , height fill
+                     ]
+                        ++ theme.gameStyle
+                    )
+                    { src = game.icon, description = game.title }
+            , inFront selectionIcon
             ]
-          <|
-            image
-                ([ width fill
-                 , height fill
-                 , selectionIcon
-                 ]
-                    ++ theme.gameStyle
-                )
-                { src = game.icon, description = game.title }
+            { onPress = Just <| SelectGame game
+            , label = text game.title
+            }
         ]
 
 
@@ -477,20 +492,23 @@ quickActionItem theme quickAction =
         , spacingXY 0 10
         , width <| px 80
         , Font.color <| rgba255 255 255 255 0
-        , mouseOver [ Font.color <| rgb255 120 140 200 ]
+        , mouseOver
+            [ Font.color <| rgb255 120 140 200
+            ]
         ]
-        [ el
+        [ Input.button
             ([ centerX
              , centerY
              , height <| px 72
              , width <| px 72
              , Border.rounded 90
-             , Events.onClick quickAction.action
+             , inFront <|
+                viewIcon quickAction.icon 48 quickAction.color
+             , Region.description quickAction.title
              ]
                 ++ theme.buttonColors
             )
-          <|
-            viewIcon quickAction.icon 48 quickAction.color
+            { onPress = Just quickAction.action, label = text "" }
         , el [ centerX ] <| text quickAction.title
         ]
 
