@@ -174,6 +174,14 @@ displayTheme themeColors =
                 , size = 5
                 }
             ]
+        , focused
+            [ Border.shadow
+                { blur = 0
+                , color = playerItemColors.mouseOverColor
+                , offset = ( 0, 0 )
+                , size = 5
+                }
+            ]
         ]
     , gameStyle =
         [ mouseOver
@@ -181,7 +189,15 @@ displayTheme themeColors =
                 { blur = 0
                 , color = buttonColors.mouseOverColor
                 , offset = ( 0, 0 )
-                , size = 4
+                , size = 5
+                }
+            ]
+        , focused
+            [ Border.shadow
+                { blur = 0
+                , color = buttonColors.mouseOverColor
+                , offset = ( 0, 0 )
+                , size = 5
                 }
             ]
         ]
@@ -194,6 +210,14 @@ displayTheme themeColors =
             , size = 0.8
             }
         , mouseOver
+            [ Border.shadow
+                { blur = 0
+                , color = buttonColors.mouseOverColor
+                , offset = ( 0, 0 )
+                , size = 5
+                }
+            ]
+        , focused
             [ Border.shadow
                 { blur = 0
                 , color = buttonColors.mouseOverColor
