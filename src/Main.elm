@@ -7,16 +7,19 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
+import Game as G exposing (Game, createGame, icon, playGame, refreshGames, sortById, sortByLastPlayed, title)
 import Html exposing (Html)
 import Html.Attributes as HtmlAttributes
 import Ionicon
 import Ionicon.Ios as IconIos
+import Player as P exposing (Player, createPlayer, icon, name)
 import Task
 import Time
 
 
 type alias Model =
     { displayMode : DisplayMode
+    , gamesList : List Game
     , selectedGame : Maybe Game
     , selectedPlayer : Maybe Player
     , timeZone : Time.Zone
@@ -27,6 +30,7 @@ type alias Model =
 initialModel : Model
 initialModel =
     { displayMode = Day
+    , gamesList = initialGamesList
     , selectedGame = Nothing
     , selectedPlayer = List.head playerList
     , timeZone = Time.utc
@@ -229,20 +233,6 @@ displayTheme themeColors =
     }
 
 
-type alias Player =
-    { id : Int
-    , name : String
-    , icon : String
-    }
-
-
-type alias Game =
-    { id : Int
-    , title : String
-    , icon : String
-    }
-
-
 type alias QuickAction msg =
     { title : String
     , icon : Icon msg
@@ -283,7 +273,14 @@ update msg model =
                 ( { model | selectedGame = Nothing }, Cmd.none )
 
             else
-                ( { model | selectedGame = Just game }, Cmd.none )
+                let
+                    selectedGame =
+                        playGame model.currentTime game
+
+                    gamesList =
+                        refreshGames game selectedGame model.gamesList
+                in
+                ( { model | selectedGame = Just selectedGame, gamesList = gamesList }, Cmd.none )
 
         SelectPlayer player ->
             if model.selectedPlayer == Just player then
@@ -313,22 +310,25 @@ subscriptions model =
 
 playerList : List Player
 playerList =
-    [ Player 0 "mats" "public/assets/icons/players/player_0.png"
-    , Player 1 "Guest" "public/assets/icons/players/player_1.png"
-    , Player 2 "フクロウ" "public/assets/icons/players/player_2.png"
-    , Player 3 "姉さん" "public/assets/icons/players/player_3.png"
-    ]
+    []
+        |> createPlayer "mats" "public/assets/icons/players/player_0.png"
+        |> createPlayer "Guest" "public/assets/icons/players/player_1.png"
+        |> createPlayer "フクロウ" "public/assets/icons/players/player_2.png"
+        |> createPlayer "姉さん" "public/assets/icons/players/player_3.png"
+        |> List.reverse
 
 
-gamesList : List Game
-gamesList =
-    [ Game 2 "三ノ国・赤き聖灰の王" "public/assets/icons/games/n_n_kn.png"
-    , Game 387 "本末転倒ラボ・Soy-Con 01" "public/assets/icons/games/t_con.png"
-    , Game 44 "パレオブレイド伝説" "public/assets/icons/games/xb_chr.png"
-    , Game 1021 "Untitled Moose Game" "public/assets/icons/games/unt_gse.png"
-    , Game 33 "Moria Odyssey" "public/assets/icons/games/t_con.png"
-    , Game 77 "ばらまけ! ごはんの大盛" "public/assets/icons/games/t_con.png"
-    ]
+initialGamesList : List Game
+initialGamesList =
+    []
+        |> createGame 2 "三ノ国・赤き聖灰の王" "public/assets/icons/games/n_n_kn.png"
+        |> createGame 387 "本末転倒ラボ・Soy-Con 01" "public/assets/icons/games/t_con.png"
+        |> createGame 44 "パレオブレイド伝説" "public/assets/icons/games/xb_chr.png"
+        |> createGame 1021 "Untitled Moose Game" "public/assets/icons/games/unt_gse.png"
+        |> createGame 33 "Moria Odyssey" "public/assets/icons/games/t_con.png"
+        |> createGame 77 "ばらまけ! ごはんの大盛" "public/assets/icons/games/t_con.png"
+        |> G.sortById
+        |> G.sortByLastPlayed
 
 
 quickActionsList : List (QuickAction msg)
@@ -344,6 +344,13 @@ quickActionsList =
 
 playerItem : DisplayTheme Msg -> Player -> Element Msg
 playerItem theme player =
+    let
+        playerIcon =
+            P.icon player
+
+        playerName =
+            P.name player
+    in
     Element.column
         [ centerX
         , centerY
@@ -360,13 +367,13 @@ playerItem theme player =
             , inFront <|
                 image
                     theme.playerItemStyle
-                    { src = player.icon, description = "" }
-            , Region.description player.name
+                    { src = playerIcon, description = playerName }
+            , Region.description playerName
             ]
             { onPress = Just <| SelectPlayer player
             , label = text ""
             }
-        , el [ centerX ] <| text player.name
+        , el [ centerX ] <| text playerName
         ]
 
 
@@ -404,6 +411,12 @@ switchTopRow model colors theme =
 gameItem : Model -> DisplayTheme Msg -> Game -> Element Msg
 gameItem model theme game =
     let
+        gameIcon =
+            G.icon game
+
+        gameTitle =
+            G.title game
+
         gameIsSelected =
             case model.selectedGame of
                 Just selectedGame ->
@@ -415,7 +428,7 @@ gameItem model theme game =
         playerIcon =
             case model.selectedPlayer of
                 Just player ->
-                    player.icon
+                    P.icon player
 
                 Nothing ->
                     ""
@@ -474,9 +487,9 @@ gameItem model theme game =
             [ centerX
             ]
           <|
-            text game.title
+            text gameTitle
         , Input.button
-            [ Region.description game.title
+            [ Region.description gameTitle
             , width <| px 254
             , height <| px 254
             , inFront <|
@@ -486,11 +499,11 @@ gameItem model theme game =
                      ]
                         ++ theme.gameStyle
                     )
-                    { src = game.icon, description = game.title }
+                    { src = gameIcon, description = gameTitle }
             , inFront selectionIcon
             ]
             { onPress = Just <| SelectGame game
-            , label = text game.title
+            , label = text gameTitle
             }
         ]
 
@@ -505,7 +518,7 @@ switchGameRow model theme =
         , scrollbarY
         ]
     <|
-        List.map (gameItem model theme) gamesList
+        List.map (gameItem model theme) model.gamesList
 
 
 quickActionItem : DisplayTheme Msg -> QuickAction Msg -> Element Msg
