@@ -397,11 +397,8 @@ switchTopRow model colors theme =
             ]
             [ row [ spacing 10 ]
                 [ text <| renderTime model.timeZone model.currentTime
-                , let
-                    mainColors =
-                        colors.mainColors
-                  in
-                  viewWifiIcon mainColors.fontColor
+                , viewWifiIcon colors.mainColors.fontColor
+                , viewBatteryIcon colors.mainColors.fontColor
                 , text "48%"
                 ]
             ]
@@ -648,3 +645,7 @@ viewIcon icon size color =
 viewWifiIcon : Color -> Element Msg
 viewWifiIcon color =
     viewIcon Ionicon.wifi 28 color
+
+viewBatteryIcon : Color -> Element Msg
+viewBatteryIcon color =
+    viewIcon Ionicon.batteryCharging 28 color
